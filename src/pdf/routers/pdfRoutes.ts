@@ -1,6 +1,6 @@
 import express from 'express'
 import multer from 'multer';
-import { convertPdfToDocx } from './pdfController';
+import { convertPdfToDocx } from '../controllers/pdfController';
 
 const pdfRouter = express.Router()
 const storage = multer.memoryStorage();
