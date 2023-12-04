@@ -2,30 +2,38 @@ import { Request, Response } from 'express';
 import * as fs from 'fs';
 import * as mammoth from 'mammoth';
 import pdf from 'pdf-parse';
-import PdfParse from 'pdf-parse';
+import  { PDFParse } from '../interface/pdfParse';
+import { Document, Packer, Paragraph } from 'docx';
+import { IPropertiesOptions } from 'docx/build/file/core-properties';
 
-
-export const convertPdfToDocx = async (req: Request, res: Response): Promise<void> => {
+export const convertPdfToDocx = async (req: Request, response: Response): Promise<void> => {
   try {
     const pdfBuffer: Buffer | null = (req && req.file) ? req.file.buffer : null;
-
     if (!pdfBuffer) {
-      res.status(400).send('No PDF file provided.');
+      response.status(400).send('No PDF file provided.');
       return;
-    }
-    // Step 1: Extract text from PDF
-    
-
-
-    pdf(pdfBuffer).then((data: any) => {
-      console.log(typeof data);
-      console.log(data.text); 
-    });
-
-    
+    }    
+    pdf(pdfBuffer).then((documentPDF) => {
+      sendPdfAsDocxResponse(documentPDF, response)
+    })
   } catch (error) {
     console.error(error);
-    res.status(500).send('Erro na conversão');
+    response.status(500).send('Erro na conversão');
   }
 };
 
+const sendPdfAsDocxResponse : any = async (documentPDF: PDFParse, response: Response) => {
+    const docx = new Document({
+        sections: [{
+            children: documentPDF.text.split('\n').map(buildPDF),
+        }],
+    });
+    const docxBuffer = await Packer.toBuffer(docx);
+    response.setHeader('Content-Disposition', 'attachment; filename=converted.docx');
+    response.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    return response.end(docxBuffer);
+  } 
+
+const buildPDF : any = (string: string) => {
+  console.log(string)
+}
